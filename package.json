@@ -1,0 +1,23 @@
+{
+  "name": "czm-ftp",
+  "version": "1.0.0",
+  "description": "ftp cli for fengyu project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "czm-ftp": "./index.js"
+  },
+  "author": "Thomas Cho",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "commander": "^6.2.0",
+    "inquirer": "^7.3.3",
+    "ssh2-sftp-client": "^5.3.2"
+  },
+  "devDependencies": {
+    "glob": "^7.1.6"
+  }
+}
