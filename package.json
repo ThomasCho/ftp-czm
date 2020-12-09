@@ -15,6 +15,7 @@
     "chalk": "^4.1.0",
     "commander": "^6.2.0",
     "inquirer": "^7.3.3",
+    "jest": "^26.6.3",
     "ssh2-sftp-client": "^5.3.2"
   },
   "devDependencies": {
