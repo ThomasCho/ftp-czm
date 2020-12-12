@@ -1,27 +1,5 @@
-const chalk = require('chalk');
 const inquirer = require('inquirer');
-const log4js = require('log4js');
-
-log4js.configure({
-  appenders: {
-    terminal: {
-      type: 'stdout',
-    },
-
-    file: {
-      type: 'file',
-      filename: 'ftp-log.log',
-    },
-  },
-  categories: {
-    default: {
-      appenders: ['terminal', 'file'],
-      level: 'all',
-    },
-  },
-});
-
-const logger = log4js.getLogger();
+const logger = require('./logger.js');
 
 // ftp 和 sftp 的超类
 class BaseUploader {
@@ -50,7 +28,7 @@ class BaseUploader {
     });
 
     this.c.on('error', (e) => {
-      this.onError(e);
+      logger.error(e);
     });
   }
 
@@ -60,38 +38,32 @@ class BaseUploader {
   }
 
   upload() {
-    this.onError('[Method] upload has not been overwrite');
+    logger.error('[Method] upload has not been overwrite');
     return Promise.reject();
   }
 
   listFile() {
-    this.onError('[Method] listFile has not been overwrite');
+    logger.error('[Method] listFile has not been overwrite');
     return Promise.reject();
   }
 
   download() {
-    this.onError('[Method] download has not been overwrite');
+    logger.error('[Method] download has not been overwrite');
     return Promise.reject();
   }
 
   deleteFile() {
-    this.onError('[Method] deleteFile has not been overwrite');
+    logger.error('[Method] deleteFile has not been overwrite');
     return Promise.reject();
   }
 
-  log(val) {
-    logger.debug(val);
-  }
-
   beforeConnect() {
-    this.log(chalk.blue('ready to connect...'));
+    logger.info('ready to connect...');
   }
 
   onReady() {
     let o = this.options;
-    this.log(
-      chalk.blue(`connected to ftp://${o.host}:${o.port}${o.root} successfully`)
-    );
+    logger.info(`connected to ftp://${o.host}:${o.port}${o.root} successfully`);
 
     this.pollingInquire();
   }
@@ -122,9 +94,8 @@ class BaseUploader {
     let args = input.slice(1);
     action = input[0];
 
-    // TODO: 调试所用，不喜欢可以去掉
-    this.log('action is: ' + action);
-    this.log('args is: ' + args);
+    logger.debug('action is: ' + action);
+    logger.debug('args is: ' + args);
 
     const ACTION_FN = {
       upload: this.upload,
@@ -144,30 +115,26 @@ class BaseUploader {
   }
 
   onDownloadSuccess(filename) {
-    this.log(chalk.yellow(`${filename} has been downloaded successfully`));
+    logger.info(`${filename} has been downloaded successfully`);
   }
 
   onDelSuccess(filename) {
-    this.log(chalk.yellow(`${filename} has been deleted successfully`));
-  }
-
-  onError(e) {
-    this.log(chalk.red(new Error(e)));
+    logger.info(`${filename} has been deleted successfully`);
   }
 
   // 开始上传前
   onUploadStart() {
-    this.log(chalk.blue('Upload is about to start...'));
+    logger.info('Upload is about to start...');
   }
 
   // 单个文件上传成功
   onFileUploaded(filename) {
-    this.log(chalk.yellow(`${filename} has been uploaded successfully`));
+    logger.info(`${filename} has been uploaded successfully`);
   }
 
   // 全部文件都上传完成
   onUploadSuccess() {
-    this.log(chalk.blue('All files uploaded.'));
+    logger.info('All files uploaded.');
   }
 
   destroy() {

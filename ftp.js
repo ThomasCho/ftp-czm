@@ -2,8 +2,8 @@ const path = require('path');
 const fs = require('fs');
 const Client = require('ftp');
 const BaseUploader = require('./base-uploader.js');
-const chalk = require('chalk');
 const globUtil = require('./glob-util.js');
+const logger = require('./logger.js');
 
 class FTP extends BaseUploader {
   constructor(options) {
@@ -20,7 +20,7 @@ class FTP extends BaseUploader {
     return new Promise((resolve, reject) => {
       this.c.list(this.options.root, (err, list) => {
         if (err) {
-          this.onError(err);
+          logger.error(err);
           reject();
           return;
         }
@@ -36,7 +36,7 @@ class FTP extends BaseUploader {
         return new Promise((resolve, reject) => {
           this.c.get(path.join(this.options.root, file), (err, stream) => {
             if (err) {
-              this.onError(err);
+              logger.error(err);
               reject(err);
               return;
             }
@@ -51,7 +51,7 @@ class FTP extends BaseUploader {
     )
       .then((promises) => {
         let len = promises.filter((pro) => pro.status !== 'rejected').length;
-        this.log(chalk.green(`${len} files have been downloaded successfully`));
+        logger.info(`${len} files have been downloaded successfully`);
       })
       .catch((e) => {
         this.destroy();
@@ -64,7 +64,7 @@ class FTP extends BaseUploader {
         return new Promise((resolve, reject) => {
           this.c.delete(path.join(this.options.root, file), (err) => {
             if (err) {
-              this.onError(err);
+              logger.error(err);
               reject(err);
               return;
             }
@@ -84,7 +84,7 @@ class FTP extends BaseUploader {
       uploadFiles.map((file, index) => {
         // 如果上传一个不存在的文件，报错，但不影响其他存在文件的继续上传
         if (!file) {
-          this.onError(`${files[index]} does not existed, upload failed...`);
+          logger.error(`${files[index]} does not existed, upload failed...`);
           return Promise.reject();
         }
 
@@ -94,7 +94,7 @@ class FTP extends BaseUploader {
             this.onFileUploaded(file);
           },
           (err) => {
-            this.onError(err);
+            logger.error(err);
           }
         );
       })

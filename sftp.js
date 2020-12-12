@@ -2,8 +2,8 @@ const path = require('path');
 const fs = require('fs');
 const Client = require('ssh2-sftp-client');
 const BaseUploader = require('./base-uploader.js');
-const chalk = require('chalk');
 const globUtil = require('./glob-util.js');
+const logger = require('./logger.js');
 
 class SFTP extends BaseUploader {
   constructor(options) {
@@ -24,7 +24,7 @@ class SFTP extends BaseUploader {
           resolve();
         },
         (err) => {
-          this.onError(err);
+          logger.error(err);
           reject();
         }
       );
@@ -42,7 +42,7 @@ class SFTP extends BaseUploader {
               resolve();
             },
             (err) => {
-              this.onError(err);
+              logger.error(err);
               reject(err);
             }
           );
@@ -51,7 +51,7 @@ class SFTP extends BaseUploader {
     )
       .then((promises) => {
         let len = promises.filter((pro) => pro.status !== 'rejected').length;
-        this.log(chalk.green(`${len} files have been downloaded successfully`));
+        logger.info(`${len} files have been downloaded successfully`);
       })
       .catch((e) => {
         this.destroy();
@@ -68,7 +68,7 @@ class SFTP extends BaseUploader {
               resolve();
             },
             (err) => {
-              this.onError(err);
+              logger.error(err);
               reject(err);
             }
           );
@@ -84,7 +84,7 @@ class SFTP extends BaseUploader {
     for (let file of uploadFiles) {
       // 如果上传一个不存在的文件，报错，但不影响其他存在文件的继续上传
       if (!file) {
-        this.onError(
+        logger.error(
           `${
             files[uploadFiles.indexOf(file)]
           } does not existed, upload failed...`
@@ -95,7 +95,7 @@ class SFTP extends BaseUploader {
             this.onFileUploaded(file);
           },
           (err) => {
-            this.onError(err);
+            logger.error(err);
           }
         );
       }
