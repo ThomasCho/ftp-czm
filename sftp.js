@@ -7,33 +7,13 @@ const globUtil = require('./glob-util.js');
 
 class SFTP extends BaseUploader {
   constructor(options) {
-    super(options);
-  }
-
-  initClient(resolve) {
-    this.c = new Client();
-
-    this.c.on('ready', () => {
-      resolve();
-    });
-
-    this.c.on('error', (e) => {
-      this.onError(e);
-    });
-  }
-
-  connect() {
-    return new Promise((resolve) => {
-      this.initClient(resolve);
-      this.c.connect({
-        host: this.options.host,
-        port: this.options.port,
-        user: this.options.user,
-        password: this.options.password,
-      });
-    }).then(() => {
-      this.onReady();
-    });
+    let opt = Object.assign(
+      {
+        baseConstructor: Client,
+      },
+      options
+    );
+    super(opt);
   }
 
   listFile() {
@@ -71,9 +51,7 @@ class SFTP extends BaseUploader {
     )
       .then((promises) => {
         let len = promises.filter((pro) => pro.status !== 'rejected').length;
-        console.log(
-          chalk.green(`${len} files have been downloaded successfully`)
-        );
+        this.log(chalk.green(`${len} files have been downloaded successfully`));
       })
       .catch((e) => {
         this.destroy();

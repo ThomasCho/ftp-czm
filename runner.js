@@ -7,7 +7,6 @@ async function runAction(options) {
   let Constructor = options.type === 'ftp' ? FTP : SFTP;
 
   let app = new Constructor(options);
-  await app.connect();
 }
 
 module.exports = runAction;

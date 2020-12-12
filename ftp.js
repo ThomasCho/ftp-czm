@@ -7,33 +7,13 @@ const globUtil = require('./glob-util.js');
 
 class FTP extends BaseUploader {
   constructor(options) {
-    super(options);
-  }
-
-  initClient(resolve) {
-    this.c = new Client();
-
-    this.c.on('ready', () => {
-      resolve();
-    });
-
-    this.c.on('error', (e) => {
-      this.onError(e);
-    });
-  }
-
-  connect() {
-    return new Promise((resolve) => {
-      this.initClient(resolve);
-      this.c.connect({
-        host: this.options.host,
-        port: this.options.port,
-        user: this.options.user,
-        password: this.options.password,
-      });
-    }).then(() => {
-      this.onReady();
-    });
+    let opt = Object.assign(
+      {
+        baseConstructor: Client,
+      },
+      options
+    );
+    super(opt);
   }
 
   listFile() {
@@ -69,11 +49,9 @@ class FTP extends BaseUploader {
         });
       })
     )
-      .then(() => {
+      .then((promises) => {
         let len = promises.filter((pro) => pro.status !== 'rejected').length;
-        console.log(
-          chalk.green(`${len} files have been downloaded successfully`)
-        );
+        this.log(chalk.green(`${len} files have been downloaded successfully`));
       })
       .catch((e) => {
         this.destroy();
@@ -141,6 +119,7 @@ class FTP extends BaseUploader {
       };
 
       let remotePath = path.join(this.options.root, filePath);
+
       if (fs.statSync(filePath).isDirectory()) {
         this.c.mkdir(remotePath, true, cb);
         return;

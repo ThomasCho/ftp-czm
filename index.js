@@ -27,13 +27,7 @@ program
   });
 
 program.on('--help', () => {
-  console.log('');
-  console.log('登陆后的具体命令如下：');
-  console.log('# 后面跟上传的文件名，可为文件或文件夹，可以为glob通配符，用空格分割 #');
-  console.log('- upload 上传命令');
-  console.log('- download 下载命令');
-  console.log('- delete 删除命令');
-  console.log('- list 查看文件列表');
+  console.log(require('./help.txt'));
 });
 
 program.parse(process.argv);
