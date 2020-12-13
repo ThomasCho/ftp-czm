@@ -1,9 +1,10 @@
 #! /usr/bin/env node
 
 const program = require('commander');
-const chalk = require('chalk');
-const runner = require('./runner.js');
+const FTP = require('./ftp.js');
+const SFTP = require('./sftp.js');
 const connect = require('./connect.js');
+const logger = require('./logger.js');
 
 program
   .command('connect')
@@ -17,17 +18,20 @@ program
   .option('--root [p]', '登陆服务器的文件夹')
   .action((option) => {
     connect(option).then(
-      (config) => {
-        runner(config);
+      async (config) => {
+        logger.info(config);
+
+        let Constructor = config.type === 'ftp' ? FTP : SFTP;
+        new Constructor(config);
       },
       (e) => {
-        console.error(chalk.red(e));
+        logger.error(e);
       }
     );
   });
 
 program.on('--help', () => {
-  console.log(require('./help.txt'));
+  logger.info(require('./help.txt'));
 });
 
 program.parse(process.argv);

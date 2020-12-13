@@ -4,6 +4,7 @@ const Client = require('ftp');
 const BaseUploader = require('./base-uploader.js');
 const globUtil = require('./glob-util.js');
 const logger = require('./logger.js');
+const chalk = require('chalk');
 
 class FTP extends BaseUploader {
   constructor(options) {
@@ -16,27 +17,36 @@ class FTP extends BaseUploader {
     super(opt);
   }
 
-  listFile() {
+  listFile(listPath = []) {
+    let displayPath = path.join(this.options.root, listPath[0] || '');
+    logger.info(`${displayPath} to be listed`);
+
     return new Promise((resolve, reject) => {
-      this.c.list(this.options.root, (err, list) => {
+      this.c.list(displayPath, (err, list) => {
         if (err) {
           logger.error(err);
+          logger.error('Listing file meets error...');
           reject();
           return;
         }
+        console.log(chalk.yellow(`####### [${displayPath}] on server #######`));
         console.dir(list);
+        console.log(chalk.yellow(`#####################`));
         resolve();
       });
     });
   }
 
   download(files = []) {
+    logger.info(`${files} to be downloaded`);
+
     return Promise.allSettled(
       files.map((file) => {
         return new Promise((resolve, reject) => {
           this.c.get(path.join(this.options.root, file), (err, stream) => {
             if (err) {
               logger.error(err);
+              logger.error('Downloading files meets error...');
               reject(err);
               return;
             }
@@ -59,12 +69,15 @@ class FTP extends BaseUploader {
   }
 
   deleteFile(files = []) {
+    logger.info(`${files} to be deleted`);
+
     return Promise.allSettled(
       files.map((file) => {
         return new Promise((resolve, reject) => {
           this.c.delete(path.join(this.options.root, file), (err) => {
             if (err) {
               logger.error(err);
+              logger.error('Deleting files meets error...');
               reject(err);
               return;
             }
@@ -77,6 +90,8 @@ class FTP extends BaseUploader {
   }
 
   upload(files = []) {
+    logger.info(`${files} to be uploaded`);
+    
     let uploadFiles = globUtil.glob(files);
     this.onUploadStart();
 
@@ -95,6 +110,7 @@ class FTP extends BaseUploader {
           },
           (err) => {
             logger.error(err);
+            logger.error(`${file} upload failed`);
           }
         );
       })

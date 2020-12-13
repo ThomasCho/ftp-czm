@@ -105,7 +105,7 @@ class BaseUploader {
       quit: this.destroy,
     };
 
-    let fn = ACTION_FN[action].call(this, args);
+    let fn = ACTION_FN[action]?.call(this, args);
 
     if (fn && fn instanceof Promise) {
       fn.catch((e) => {}).finally(() => {

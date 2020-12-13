@@ -4,6 +4,7 @@ const Client = require('ssh2-sftp-client');
 const BaseUploader = require('./base-uploader.js');
 const globUtil = require('./glob-util.js');
 const logger = require('./logger.js');
+const chalk = require('chalk');
 
 class SFTP extends BaseUploader {
   constructor(options) {
@@ -16,15 +17,21 @@ class SFTP extends BaseUploader {
     super(opt);
   }
 
-  listFile() {
+  listFile(listPath = []) {
+    let displayPath = path.join(this.options.root, listPath[0] || '');
+    logger.info(`${displayPath} to be listed`);
+
     return new Promise((resolve, reject) => {
-      this.c.list(this.options.root).then(
+      this.c.list(displayPath).then(
         (data) => {
+          console.log(chalk.yellow(`####### [${displayPath}] on server #######`));
           console.dir(data);
+          console.log(chalk.yellow(`#####################`));
           resolve();
         },
         (err) => {
           logger.error(err);
+          logger.error('Listing file meets error...');
           reject();
         }
       );
@@ -32,6 +39,8 @@ class SFTP extends BaseUploader {
   }
 
   download(files = []) {
+    logger.info(`${files} to be downloaded`);
+
     return Promise.allSettled(
       files.map((file) => {
         return new Promise((resolve, reject) => {
@@ -43,6 +52,7 @@ class SFTP extends BaseUploader {
             },
             (err) => {
               logger.error(err);
+              logger.error('Downloading files meets error...');
               reject(err);
             }
           );
@@ -59,6 +69,8 @@ class SFTP extends BaseUploader {
   }
 
   deleteFile(files = []) {
+    logger.info(`${files} to be deleted`);
+
     return Promise.allSettled(
       files.map((file) => {
         return new Promise((resolve, reject) => {
@@ -69,6 +81,7 @@ class SFTP extends BaseUploader {
             },
             (err) => {
               logger.error(err);
+              logger.error('Deleting files meets error...');
               reject(err);
             }
           );
@@ -78,6 +91,8 @@ class SFTP extends BaseUploader {
   }
 
   async upload(files = []) {
+    logger.info(`${files} to be uploaded`);
+
     let uploadFiles = globUtil.glob(files);
     this.onUploadStart();
 
@@ -96,6 +111,7 @@ class SFTP extends BaseUploader {
           },
           (err) => {
             logger.error(err);
+            logger.error(`${file} upload failed`);
           }
         );
       }
