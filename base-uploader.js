@@ -1,16 +1,13 @@
-const inquirer = require('inquirer');
-const logger = require('./logger.js');
+const { logger, devLogger } = require('./logger.js');
+const LOCAL_IP = require('./util.js').getIPAddress();
 
 // ftp 和 sftp 的超类
 class BaseUploader {
   constructor(options) {
     this.initOpts(options);
-    this.initClient();
-    this.connect();
   }
 
   initOpts(options) {
-    this.baseConstructor = options.baseConstructor;
     this.options = {
       host: options.host,
       port: options.port,
@@ -21,20 +18,38 @@ class BaseUploader {
   }
 
   initClient() {
+    if (!this.baseConstructor) {
+      logger.error('[Method] Initialization got no constructor');
+      return;
+    }
+
     this.c = new this.baseConstructor();
-
-    this.c.on('ready', () => {
-      this.onReady();
-    });
-
-    this.c.on('error', (e) => {
-      logger.error(e);
-    });
   }
 
   connect() {
+    if (!this.c) {
+      logger.error('[Method] Client has not been initialized. Can not connect.');
+      return;
+    }
+    
     this.beforeConnect();
-    this.c.connect(this.options);
+
+    return new Promise((resolve, reject) => {
+      this.c.on('ready', () => {
+        this.onReady();
+        resolve(this.options);
+      });
+
+      this.c.on('error', (e) => {
+        logger.error(e);
+        reject(e);
+      });
+
+      this.c.connect(this.options);
+
+      logger.addContext('IP', LOCAL_IP);
+      devLogger.addContext('IP', LOCAL_IP);
+    });
   }
 
   upload() {
@@ -64,54 +79,6 @@ class BaseUploader {
   onReady() {
     let o = this.options;
     logger.info(`connected to ftp://${o.host}:${o.port}${o.root} successfully`);
-
-    this.pollingInquire();
-  }
-
-  pollingInquire() {
-    const ACTION = ['upload', 'download', 'delete', 'list', 'quit'];
-
-    inquirer
-      .prompt({
-        type: 'input',
-        name: 'action',
-        message: `请问有什么可以帮到你？（${ACTION.join(', ')}）`,
-        validate: function (input) {
-          if (!ACTION.includes(input.split(' ')[0])) {
-            return `请输入如 ${ACTION.join(', ')} 的命令`;
-          }
-
-          return true;
-        },
-      })
-      .then(({ action }) => {
-        this.dealWithAnswers(action);
-      });
-  }
-
-  dealWithAnswers(action) {
-    let input = action.split(' ');
-    let args = input.slice(1);
-    action = input[0];
-
-    logger.debug('action is: ' + action);
-    logger.debug('args is: ' + args);
-
-    const ACTION_FN = {
-      upload: this.upload,
-      download: this.download,
-      delete: this.deleteFile,
-      list: this.listFile,
-      quit: this.destroy,
-    };
-
-    let fn = ACTION_FN[action]?.call(this, args);
-
-    if (fn && fn instanceof Promise) {
-      fn.catch((e) => {}).finally(() => {
-        this.pollingInquire();
-      });
-    }
   }
 
   onDownloadSuccess(filename) {
@@ -132,12 +99,8 @@ class BaseUploader {
     logger.info(`${filename} has been uploaded successfully`);
   }
 
-  // 全部文件都上传完成
-  onUploadSuccess() {
-    logger.info('All files uploaded.');
-  }
-
   destroy() {
+    logger.info('you are logging out the FTP service...');
     if (this.c) {
       this.c?.end();
       this.c = null;

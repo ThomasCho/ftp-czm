@@ -3,18 +3,14 @@ const fs = require('fs');
 const Client = require('ftp');
 const BaseUploader = require('./base-uploader.js');
 const globUtil = require('./glob-util.js');
-const logger = require('./logger.js');
+const { logger, devLogger } = require('./logger.js');
 const chalk = require('chalk');
 
 class FTP extends BaseUploader {
   constructor(options) {
-    let opt = Object.assign(
-      {
-        baseConstructor: Client,
-      },
-      options
-    );
-    super(opt);
+    super(options);
+    this.baseConstructor = Client;
+    this.initClient();
   }
 
   listFile(listPath = []) {
@@ -24,7 +20,7 @@ class FTP extends BaseUploader {
     return new Promise((resolve, reject) => {
       this.c.list(displayPath, (err, list) => {
         if (err) {
-          logger.error(err);
+          devLogger.error(err);
           logger.error('Listing file meets error...');
           reject();
           return;
@@ -32,7 +28,7 @@ class FTP extends BaseUploader {
         console.log(chalk.yellow(`####### [${displayPath}] on server #######`));
         console.dir(list);
         console.log(chalk.yellow(`#####################`));
-        resolve();
+        resolve(list);
       });
     });
   }
@@ -45,8 +41,8 @@ class FTP extends BaseUploader {
         return new Promise((resolve, reject) => {
           this.c.get(path.join(this.options.root, file), (err, stream) => {
             if (err) {
-              logger.error(err);
-              logger.error('Downloading files meets error...');
+              devLogger.error(err);
+              logger.error(`Downloading [${file}] meets error... Check if the file exists on server`);
               reject(err);
               return;
             }
@@ -62,9 +58,6 @@ class FTP extends BaseUploader {
       .then((promises) => {
         let len = promises.filter((pro) => pro.status !== 'rejected').length;
         logger.info(`${len} files have been downloaded successfully`);
-      })
-      .catch((e) => {
-        this.destroy();
       });
   }
 
@@ -76,12 +69,12 @@ class FTP extends BaseUploader {
         return new Promise((resolve, reject) => {
           this.c.delete(path.join(this.options.root, file), (err) => {
             if (err) {
-              logger.error(err);
-              logger.error('Deleting files meets error...');
+              devLogger.error(err);
+              logger.error(`Deleting [${file}] meets error... Check if the file exists on server`);
               reject(err);
               return;
             }
-            resolve();
+            resolve(file);
             this.onDelSuccess(file);
           });
         });
@@ -109,17 +102,14 @@ class FTP extends BaseUploader {
             this.onFileUploaded(file);
           },
           (err) => {
-            logger.error(err);
+            devLogger.error(err);
             logger.error(`${file} upload failed`);
           }
         );
       })
-    ).then((pros) => {
-      // 如果全部上传文件都上传失败了，则不打印总结信息
-      if (pros.every((pro) => pro.status === 'rejected')) {
-        return;
-      }
-      this.onUploadSuccess();
+    ).then((promises) => {
+      let len = promises.filter((pro) => pro.status !== 'rejected').length;
+      logger.info(`${len} files have been uploaded successfully`);
     });
   }
 

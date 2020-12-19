@@ -27,7 +27,7 @@ const REGEX = {
   user: /\S+/,
 };
 
-function connect(option = {}) {
+function inquireConnect(option = {}) {
   return new Promise((resolve, reject) => {
     if (!option.type) {
       promps.push({
@@ -118,4 +118,4 @@ function connect(option = {}) {
   });
 }
 
-module.exports = connect;
+module.exports = inquireConnect;

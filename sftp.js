@@ -3,18 +3,14 @@ const fs = require('fs');
 const Client = require('ssh2-sftp-client');
 const BaseUploader = require('./base-uploader.js');
 const globUtil = require('./glob-util.js');
-const logger = require('./logger.js');
+const { logger, devLogger } = require('./logger.js');
 const chalk = require('chalk');
 
 class SFTP extends BaseUploader {
   constructor(options) {
-    let opt = Object.assign(
-      {
-        baseConstructor: Client,
-      },
-      options
-    );
-    super(opt);
+    super(options);
+    this.baseConstructor = Client;
+    this.initClient();
   }
 
   listFile(listPath = []) {
@@ -27,10 +23,10 @@ class SFTP extends BaseUploader {
           console.log(chalk.yellow(`####### [${displayPath}] on server #######`));
           console.dir(data);
           console.log(chalk.yellow(`#####################`));
-          resolve();
+          resolve(data);
         },
         (err) => {
-          logger.error(err);
+          devLogger.error(err);
           logger.error('Listing file meets error...');
           reject();
         }
@@ -51,8 +47,8 @@ class SFTP extends BaseUploader {
               resolve();
             },
             (err) => {
-              logger.error(err);
-              logger.error('Downloading files meets error...');
+              devLogger.error(err);
+              logger.error(`Downloading [${file}] meets error... Check if the file exists on server`);
               reject(err);
             }
           );
@@ -62,9 +58,6 @@ class SFTP extends BaseUploader {
       .then((promises) => {
         let len = promises.filter((pro) => pro.status !== 'rejected').length;
         logger.info(`${len} files have been downloaded successfully`);
-      })
-      .catch((e) => {
-        this.destroy();
       });
   }
 
@@ -80,8 +73,8 @@ class SFTP extends BaseUploader {
               resolve();
             },
             (err) => {
-              logger.error(err);
-              logger.error('Deleting files meets error...');
+              devLogger.error(err);
+              logger.error(`Deleting [${file}] meets error... Check if the file exists on server`);
               reject(err);
             }
           );
@@ -96,6 +89,8 @@ class SFTP extends BaseUploader {
     let uploadFiles = globUtil.glob(files);
     this.onUploadStart();
 
+    let successTimes = 0;
+
     for (let file of uploadFiles) {
       // 如果上传一个不存在的文件，报错，但不影响其他存在文件的继续上传
       if (!file) {
@@ -108,16 +103,17 @@ class SFTP extends BaseUploader {
         await this._startUpload(file).then(
           () => {
             this.onFileUploaded(file);
+            successTimes++;
           },
           (err) => {
-            logger.error(err);
+            devLogger.error(err);
             logger.error(`${file} upload failed`);
           }
         );
       }
     }
 
-    this.onUploadSuccess();
+    logger.info(`${successTimes} files have been uploaded successfully`);
     return Promise.resolve();
   }
 
