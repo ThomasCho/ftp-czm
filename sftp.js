@@ -20,9 +20,9 @@ class SFTP extends BaseUploader {
     return new Promise((resolve, reject) => {
       this.c.list(displayPath).then(
         (data) => {
-          console.log(chalk.yellow(`####### [${displayPath}] on server #######`));
-          console.dir(data);
-          console.log(chalk.yellow(`#####################`));
+          logger.info(chalk.yellow(`####### [${displayPath}] on server #######`));
+          logger.info(data);
+          logger.info(chalk.yellow(`#####################`));
           resolve(data);
         },
         (err) => {

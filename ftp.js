@@ -25,9 +25,9 @@ class FTP extends BaseUploader {
           reject();
           return;
         }
-        console.log(chalk.yellow(`####### [${displayPath}] on server #######`));
-        console.dir(list);
-        console.log(chalk.yellow(`#####################`));
+        logger.info(chalk.yellow(`####### [${displayPath}] on server #######`));
+        logger.info(list);
+        logger.info(chalk.yellow(`#####################`));
         resolve(list);
       });
     });

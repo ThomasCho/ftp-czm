@@ -1,5 +1,4 @@
-const { logger, devLogger } = require('./logger.js');
-const LOCAL_IP = require('./util.js').getIPAddress();
+const { logger } = require('./logger.js');
 
 // ftp 和 sftp 的超类
 class BaseUploader {
@@ -46,9 +45,6 @@ class BaseUploader {
       });
 
       this.c.connect(this.options);
-
-      logger.addContext('IP', LOCAL_IP);
-      devLogger.addContext('IP', LOCAL_IP);
     });
   }
 

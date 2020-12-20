@@ -5,7 +5,11 @@ const SFTP = require('./sftp.js');
 const connectInquiry = require('./bin/connect.js');
 const pollingInquire = require('./bin/polling-inquire.js');
 const { logger, devLogger } = require('./logger.js');
+const LOCAL_IP = require('./util.js').getIPAddress();
 const program = require('commander');
+
+logger.addContext('IP', LOCAL_IP);
+devLogger.addContext('IP', LOCAL_IP);
 
 async function startInquire(ftp) {
   const ACTION_FN = {
