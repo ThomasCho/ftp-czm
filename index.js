@@ -1,11 +1,11 @@
 #! /usr/bin/env node
 
-const FTP = require('./ftp.js');
-const SFTP = require('./sftp.js');
+const FTP = require('./lib/ftp.js');
+const SFTP = require('./lib/sftp.js');
 const connectInquiry = require('./bin/connect.js');
 const pollingInquire = require('./bin/polling-inquire.js');
-const { logger, devLogger } = require('./logger.js');
-const LOCAL_IP = require('./util.js').getIPAddress();
+const { logger, devLogger } = require('./lib/logger.js');
+const LOCAL_IP = require('./util/util.js').getIPAddress();
 const program = require('commander');
 
 logger.addContext('IP', LOCAL_IP);
@@ -30,7 +30,7 @@ async function startInquire(ftp) {
   devLogger.debug('action is: ' + action);
   devLogger.debug('args is: ' + args);
 
-  let fn = ACTION_FN[answer]?.call(ftp, args);
+  let fn = ACTION_FN[action]?.call(ftp, args);
 
   if (fn && fn instanceof Promise) {
     fn.catch((e) => {}).finally(() => {
