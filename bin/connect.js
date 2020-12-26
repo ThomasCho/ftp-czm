@@ -15,7 +15,7 @@ let SFTP_CONFIG = {
   host: '47.107.157.97',
   port: '22',
   user: 'sftp',
-  password: 'Admin@123',
+  password: '123456',
   root: '/czm/',
 };
 let promps = [];
